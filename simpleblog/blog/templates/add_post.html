@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Create a New Blog Post{% endblock %}
+
+{% block content %}
+
+<style>
+    body {
+        background-color: #f8f9fa; /* Light grey background */
+    }
+
+    .card {
+        border-radius: 10px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    h2 {
+        font-family: 'Arial', sans-serif;
+        font-weight: bold;
+    }
+
+    .form-control {
+        border-radius: 5px;
+    }
+</style>
+
+
+{% if user.is_authenticated %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-dark text-white text-center">
+                        <h2 class="mb-0">Add a New Post</h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {{ form.media }}
+                            {{ form.as_p }}
+                            <button class="btn btn-primary w-100 mt-3">Publish Post</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let name = "{{ user.id }}";
+        document.getElementById("elder").value = name;
+    </script>
+{% else %}
+    <div class="container mt-5 text-center">
+        <h1 class="text-danger">Access Denied</h1>
+        <p class="lead">You are not allowed to access this page.</p>
+        <a href="{% url 'home' %}" class="btn btn-secondary mt-3">Go Back to Home</a>
+    </div>
+{% endif %}
+
+{% endblock %}

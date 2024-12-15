@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .post-image {
+        width: 500px;
+        height: auto;
+        margin-top: 10px;  /* Add space below the title */
+    }
+    
+    .dropdown-menu {
+        min-width: 100px; /* Ensure the dropdown is wide enough */
+    }
+</style>
+<h1>Posts</h1>
+
+<ul>
+    {% for post in object_list %}
+    <li>
+        <h2 style="font-weight: bold;">
+            <a href="{% url 'article-detail' post.pk %}">{{ post.title }}</a>
+        </h2>
+
+        {% if post.header_image %}
+            <img src="{{ post.header_image.url }}" alt="{{ post.title }}" class="post-image">
+        {% endif %}
+
+        - <a href="{% url 'category' post.category|slugify %}">{{ post.category }}</a>
+        - {{ post.author.first_name }} {{ post.author.last_name }}
+        - {{ post.post_date }} <small>
+
+            {% if user.is_authenticated %}
+                {% if user.id == post.author.id %}
+                    <!-- Dropdown Button for Edit/Delete -->
+                    <div class="dropdown d-inline">
+                        <button class="btn btn-link dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            ...
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li><a class="dropdown-item" href="{% url 'update_post' post.pk %}">Edit</a></li>
+                            <li><a class="dropdown-item" href="{% url 'delete_post' post.pk %}">Delete</a></li>
+                        </ul>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+        </small> <br/>
+        {{ post.snippet }}
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
