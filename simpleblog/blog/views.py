@@ -1,104 +1,117 @@
-from django.shortcuts import render, get_object_or_404
-from django.urls import reverse_lazy, reverse
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
+from django.http import HttpResponseRedirect
 from .models import Post, Category, Comment
 from .forms import PostForm, EditForm, CommentForm
-from django.http import HttpResponseRedirect
 
-# Create your views here.
+# Home view
+def home_view(request):
+    cat_menu = Category.objects.all()
+    posts = Post.objects.all().order_by('-post_date')  # Or you can use your list view logic
+    return render(request, 'home.html', {
+        'cat_menu': cat_menu,
+        'posts': posts,
+    })
 
-#def home(request):
-#    return render(request, 'home.html', {})
+# Article detail view
+def article_detail_view(request, pk):
+    post = get_object_or_404(Post, id=pk)
+    cat_menu = Category.objects.all()
+    total_likes = post.total_likes()
 
-def LikeView(request, pk):
-    post = get_object_or_404(Post, id=request.POST.get('post_id'))
     liked = False
     if post.likes.filter(id=request.user.id).exists():
-        post.likes.remove(request.user)
-        liked = False
-    else:
-        post.likes.add(request.user)
         liked = True
 
-    return HttpResponseRedirect(reverse('article-detail', args=[str(pk)]))
+    context = {
+        'post': post,
+        'cat_menu': cat_menu,
+        'total_likes': total_likes,
+        'liked': liked,
+    }
+    return render(request, 'article_details.html', context)
 
-class HomeView(ListView):
-    model = Post
-    template_name = 'home.html'
-    ordering = ['-post_date']
-    #ordering = ['-id']
+# Add post view
+def add_post_view(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    else:
+        form = PostForm()
 
-    def get_context_data(self, *args, **kwargs):
-        cat_menu = Category.objects.all()
-        context = super(HomeView, self).get_context_data(*args, **kwargs)
-        context["cat_menu"] = cat_menu
-        return context
+    return render(request, 'add_post.html', {'form': form})
 
-def CategoryListView(request):
-    return render(request, 'category_list.html')
+# Update post view
+def update_post_view(request, pk):
+    post = get_object_or_404(Post, id=pk)
+    if request.method == 'POST':
+        form = EditForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            form.save()
+            return redirect('article-detail', pk=post.id)
+    else:
+        form = EditForm(instance=post)
 
-def CategoryView(request, cats):
-    # Replace '-' with spaces in the category name
+    return render(request, 'update_post.html', {'form': form})
+
+# Delete post view
+def delete_post_view(request, pk):
+    post = get_object_or_404(Post, id=pk)
+    if request.method == 'POST':
+        post.delete()
+        return redirect('home')
+
+    return render(request, 'delete_post.html', {'post': post})
+
+# Add comment view
+def add_comment_view(request, pk):
+    post = get_object_or_404(Post, id=pk)
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.save()
+            return redirect('article-detail', pk=post.id)
+    else:
+        form = CommentForm()
+
+    return render(request, 'add_comment.html', {'form': form})
+
+# Add category view
+def add_category_view(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    else:
+        form = PostForm()
+
+    return render(request, 'add_category.html', {'form': form})
+
+# Category list view
+def category_list_view(request):
+    cat_menu = Category.objects.all()
+    return render(request, 'category_list.html', {'cat_menu': cat_menu})
+
+# Posts filtered by category
+def category_view(request, cats):
     category_name = cats.replace('-', ' ').title()
-    # Filter posts by the category name
     category_posts = Post.objects.filter(category__iexact=category_name)
-
     return render(request, 'categories.html', {
         'cats': category_name,
         'category_posts': category_posts,
     })
 
-class ArticleDetailView(DetailView):
-    model = Post
-    template_name = 'article_details.html'
+# Like view
+def like_view(request, pk):
+    post = get_object_or_404(Post, id=request.POST.get('post_id'))
+    if post.likes.filter(id=request.user.id).exists():
+        post.likes.remove(request.user)
+    else:
+        post.likes.add(request.user)
 
-    def get_context_data(self, *args, **kwargs):
-        cat_menu = Category.objects.all()
-        context = super(ArticleDetailView, self).get_context_data(*args, **kwargs)
-
-        stuff = get_object_or_404(Post, id=self.kwargs['pk'])
-        total_likes = stuff.total_likes()
-
-        liked = False
-        if stuff.likes.filter(id=self.request.user.id).exists():
-            liked = True
-
-        context["cat_menu"] = cat_menu
-        context["total_likes"] = total_likes
-        context["liked"] = liked
-        return context
-
-class AddPostView(CreateView):
-    model = Post
-    form_class = PostForm
-    template_name = 'add_post.html'
-    # fields = '__all__'
-    # fields = ('title', 'body')
-
-class AddCommentView(CreateView):
-    model = Comment
-    form_class = CommentForm
-    template_name = 'add_comment.html'
-    # fields = '__all__'
-    def form_valid(self, form):
-        form.instance.post_id = self.kwargs['pk']
-        return super().form_valid(form)
-
-    success_url = reverse_lazy('home')
-
-class AddCategoryView(CreateView):
-    model = Category
-    #form_class = PostForm
-    template_name = 'add_category.html'
-    fields = '__all__'
-
-class UpdatePostView(UpdateView):
-    model = Post
-    form_class = EditForm
-    template_name = 'update_post.html'
-    #fields = ['title', 'title_tag', 'body']
-
-class DeletePostView(DeleteView):
-    model = Post
-    template_name = 'delete_post.html'
-    success_url = reverse_lazy('home')
+    return HttpResponseRedirect(reverse('article-detail', args=[str(pk)]))

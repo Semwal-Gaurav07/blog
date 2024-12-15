@@ -1,18 +1,15 @@
 from django.urls import path
-
-from .views import HomeView, ArticleDetailView, AddPostView, UpdatePostView, DeletePostView, AddCategoryView, CategoryView, CategoryListView, LikeView, AddCommentView
 from . import views
 
 urlpatterns = [
-    #path('', views.home, name="home"),
-    path('', HomeView.as_view(), name="home"),
-    path('article/<int:pk>', ArticleDetailView.as_view(), name="article-detail"),
-    path('add_post/', AddPostView.as_view(), name="add_post"),
-    path('add_category/', AddCategoryView.as_view(), name="add_category"),
-    path('article/edit/<int:pk>', UpdatePostView.as_view(), name='update_post'),
-    path('article/<int:pk>/remove', DeletePostView.as_view(), name='delete_post'),
-    path('category/<str:cats>/', views.CategoryView, name='category'),
-    path('category-list/', CategoryListView, name='category-list'),
-    path('like/<int:pk>', LikeView, name='like_post'),
-    path('article/<int:pk>/comment/', AddCommentView.as_view(), name="add_comment"),
+    path('', views.home_view, name="home"),
+    path('article/<int:pk>', views.article_detail_view, name="article-detail"),
+    path('add_post/', views.add_post_view, name="add_post"),
+    path('add_category/', views.add_category_view, name="add_category"),
+    path('article/edit/<int:pk>', views.update_post_view, name='update_post'),
+    path('article/<int:pk>/remove', views.delete_post_view, name='delete_post'),
+    path('category/<str:cats>/', views.category_view, name='category'),
+    path('category-list/', views.category_list_view, name='category-list'),
+    path('like/<int:pk>', views.like_view, name='like_post'),
+    path('article/<int:pk>/comment/', views.add_comment_view, name="add_comment"),
 ]

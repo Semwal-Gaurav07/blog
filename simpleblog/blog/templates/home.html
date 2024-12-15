@@ -7,15 +7,16 @@
         height: auto;
         margin-top: 10px;  /* Add space below the title */
     }
-    
-    .dropdown-menu {
-        min-width: 100px; /* Ensure the dropdown is wide enough */
+    .post-snippet {
+        font-size: 1.2em;
+        margin-top: 15px;
     }
 </style>
+
 <h1>Posts</h1>
 
 <ul>
-    {% for post in object_list %}
+    {% for post in posts %}
     <li>
         <h2 style="font-weight: bold;">
             <a href="{% url 'article-detail' post.pk %}">{{ post.title }}</a>
@@ -25,9 +26,14 @@
             <img src="{{ post.header_image.url }}" alt="{{ post.title }}" class="post-image">
         {% endif %}
 
-        - <a href="{% url 'category' post.category|slugify %}">{{ post.category }}</a>
-        - {{ post.author.first_name }} {{ post.author.last_name }}
-        - {{ post.post_date }} <small>
+        <div class="post-snippet">
+            {{ post.snippet }}
+        </div>
+
+        <small>
+            - <a href="{% url 'category' post.category|slugify %}">{{ post.category }}</a>
+            - {{ post.author.first_name }} {{ post.author.last_name }}
+            - {{ post.post_date }} 
 
             {% if user.is_authenticated %}
                 {% if user.id == post.author.id %}
@@ -43,9 +49,7 @@
                     </div>
                 {% endif %}
             {% endif %}
-
-        </small> <br/>
-        {{ post.snippet }}
+        </small>
     </li>
     {% endfor %}
 </ul>
